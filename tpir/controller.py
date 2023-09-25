@@ -1,10 +1,9 @@
-#!/usr/bin/env python
 """Interface between client calls and sensors/actuators. Stores state."""
 import asyncio
 import logging
 
-from controllers.adapters.tpir import config
-from controllers.adapters.tpir.interfaces import Tpir
+from . import config
+from .interfaces import Tpir
 
 logger = logging.getLogger('tpir')
 

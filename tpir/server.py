@@ -5,9 +5,8 @@ from logging.handlers import RotatingFileHandler
 
 from aiohttp import web
 
-from controllers.adapters.tpir import config
-from controllers.adapters.tpir.controller import Controller
-from controllers.shared import util
+from . import config
+from .controller import Controller
 
 logger = logging.getLogger('tpir')
 fmt = '%(asctime)s\n%(levelname)s %(funcName)s:%(lineno)d\n%(message)s\n'
@@ -23,7 +22,7 @@ async def root(request):
 
 async def logs(request):
     """Serve logs page."""
-    return web.Response(text=util.render_logs(config.log_path),
+    return web.Response(text=render_logs(config.log_path),
                         content_type='text/html')
 
 
@@ -59,6 +58,29 @@ def main():
     app.on_shutdown.append(controller.close)
 
     web.run_app(app, port=args.port)
+
+def render_logs(path, controller_name, prettyprint=True):
+    """Convert a log-formatted string into pretty-printed HTML.
+
+    Edits include:
+     * Most recent timestamp on top
+     * Long error messages are truncated
+    """
+    with open(path) as in_file:
+        logs = in_file.read()
+    sorted_logs = logs.split('\n\n')[::-1]
+    for i, log in enumerate(sorted_logs):
+        if '\n' not in log:
+            continue
+        split = log.split('\n')
+        if len(split) > 100:
+            log = '\n'.join(split[:10] + ['[ ... ]'] + split[-10:])
+        try:
+            d = log.index('\n')
+            sorted_logs[i] = f'<pre><b>{log[:d]}</b>{log[d:]}</pre>'
+        except ValueError:
+            pass
+    return ''.join(sorted_logs)
 
 
 if __name__ == '__main__':
